@@ -10,11 +10,14 @@
   const submitBtn = document.getElementById('submitBtn');
   const mainForm = document.getElementById('mainForm');
   const successScreen = document.getElementById('successScreen');
+  const pageMain = document.querySelector('main');
   let submissionComplete = false;
+  let originalUpdateProgress = null;
 
   if (!submitBtn || !mainForm) return;
 
   injectStatusArea();
+  injectSuccessBanner();
   injectHoneypotField();
   improveAccessibility();
   bindSubmit();
@@ -78,6 +81,7 @@
 
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
       showMessage(data.message || 'Survey submitted successfully.', 'success');
+      showSuccessBanner(data.message || 'Survey submitted successfully.');
       completeSubmission();
     } catch (error) {
       const msg = /network/i.test(String(error?.message))
@@ -198,6 +202,7 @@
     }
 
     setProgressComplete();
+    detachOriginalProgressListeners();
   }
 
   function setProgressComplete() {
@@ -207,10 +212,37 @@
     if (progressPct) progressPct.textContent = '100% complete';
   }
 
+  function injectSuccessBanner() {
+    if (!pageMain || document.getElementById('submitSuccessBanner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'submitSuccessBanner';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    banner.style.display = 'none';
+    banner.style.margin = '0 0 16px 0';
+    banner.style.padding = '14px 16px';
+    banner.style.border = '1px solid #1E3A7B';
+    banner.style.background = '#EEF2FA';
+    banner.style.color = '#1E3A7B';
+    banner.style.borderLeft = '6px solid #F5C842';
+    banner.style.borderRadius = '6px';
+    banner.style.fontWeight = '700';
+    banner.textContent = 'Survey submitted successfully.';
+    pageMain.insertBefore(banner, pageMain.firstChild);
+  }
+
+  function showSuccessBanner(message) {
+    const banner = document.getElementById('submitSuccessBanner');
+    if (!banner) return;
+    banner.textContent = message;
+    banner.style.display = 'block';
+  }
+
   // Existing inline script keeps recalculating progress on input/scroll.
   // Once submit succeeds, force it to remain complete.
   const baseUpdateProgress = window.updateProgress;
   if (typeof baseUpdateProgress === 'function') {
+    originalUpdateProgress = baseUpdateProgress;
     window.updateProgress = function wrappedUpdateProgress() {
       if (submissionComplete) {
         setProgressComplete();
@@ -218,6 +250,13 @@
       }
       return baseUpdateProgress();
     };
+  }
+
+  function detachOriginalProgressListeners() {
+    if (!originalUpdateProgress) return;
+    document.removeEventListener('input', originalUpdateProgress);
+    document.removeEventListener('change', originalUpdateProgress);
+    window.removeEventListener('scroll', originalUpdateProgress);
   }
 
   function injectHoneypotField() {

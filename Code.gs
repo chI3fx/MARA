@@ -109,9 +109,9 @@ function setupSheetFormatting_(sheet, headers) {
     bodyRange.setBackground(white).setVerticalAlignment('top').setWrap(true);
   }
 
-  if (!sheet.getFilter() && lastRow >= 1) {
-    sheet.getRange(1, 1, lastRow, totalCols).createFilter();
-  }
+  const existingFilter = sheet.getFilter();
+  if (existingFilter) existingFilter.remove();
+  if (lastRow >= 1) sheet.getRange(1, 1, lastRow, totalCols).createFilter();
 
   // Apply friendly column widths by header type.
   headers.forEach(function (h, i) {
@@ -135,7 +135,15 @@ function ensureHeaders_(sheet) {
   const dynamicKeys = getDynamicSurveyKeys_();
   const targetHeaders = requiredBase.concat(dynamicKeys);
 
-  const merged = existing.slice();
+  const blockedHeaders = {
+    'metadata.pageUrl': true,
+    'metadata.origin': true,
+    'metadata.language': true,
+    'metadata.platform': true,
+    'metadata.submittedAtClient': true
+  };
+
+  const merged = existing.filter(function (h) { return !blockedHeaders[h]; });
   targetHeaders.forEach((key) => {
     if (merged.indexOf(key) === -1) merged.push(key);
   });
@@ -147,6 +155,9 @@ function ensureHeaders_(sheet) {
 
   if (existing.join('||') !== merged.join('||')) {
     sheet.getRange(1, 1, 1, merged.length).setValues([merged]);
+    if (lastCol > merged.length) {
+      sheet.getRange(1, merged.length + 1, sheet.getMaxRows(), lastCol - merged.length).clearContent();
+    }
   }
 
   return merged;
@@ -370,5 +381,15 @@ function jsonResponse_(success, message, statusCode, extra) {
   return ContentService
     .createTextOutput(JSON.stringify(body))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Run manually from Apps Script editor to refresh headers/formatting immediately.
+function adminRefreshSheet_() {
+  const spreadsheetId = SCRIPT_PROPERTIES.getProperty('SPREADSHEET_ID');
+  if (!spreadsheetId) throw new Error('Missing SPREADSHEET_ID script property');
+  const ss = SpreadsheetApp.openById(spreadsheetId);
+  const sheet = getOrCreateSheet_(ss, SHEET_NAME);
+  const headers = ensureHeaders_(sheet);
+  setupSheetFormatting_(sheet, headers);
 }
 
