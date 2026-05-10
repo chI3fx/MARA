@@ -71,6 +71,7 @@ function writeResponse_(payload) {
   const sheet = getOrCreateSheet_(ss, SHEET_NAME);
 
   const headers = ensureHeaders_(sheet);
+  setupSheetFormatting_(sheet, headers);
   const rowObject = flattenPayload_(payload);
   rowObject.timestamp = new Date().toISOString();
   rowObject.responseId = createResponseId_();
@@ -80,6 +81,50 @@ function writeResponse_(payload) {
   sheet.appendRow(row);
 
   return { responseId: rowObject.responseId };
+}
+
+function setupSheetFormatting_(sheet, headers) {
+  const totalCols = Math.max(headers.length, 1);
+  const lastRow = Math.max(sheet.getLastRow(), 1);
+
+  // MARA palette
+  const navy = '#1E3A7B';
+  const yellow = '#F5C842';
+  const white = '#FFFFFF';
+
+  sheet.setFrozenRows(1);
+
+  const headerRange = sheet.getRange(1, 1, 1, totalCols);
+  headerRange
+    .setBackground(navy)
+    .setFontColor(yellow)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  sheet.setRowHeight(1, 34);
+
+  if (lastRow > 1) {
+    const bodyRange = sheet.getRange(2, 1, lastRow - 1, totalCols);
+    bodyRange.setBackground(white).setVerticalAlignment('top').setWrap(true);
+  }
+
+  if (!sheet.getFilter() && lastRow >= 1) {
+    sheet.getRange(1, 1, lastRow, totalCols).createFilter();
+  }
+
+  // Apply friendly column widths by header type.
+  headers.forEach(function (h, i) {
+    const col = i + 1;
+    let width = 220;
+    if (h === 'timestamp') width = 190;
+    if (h === 'responseId') width = 190;
+    if (h === 'userAgent') width = 320;
+    if (/phone/i.test(h)) width = 150;
+    if (/name|association|area/i.test(h)) width = 180;
+    if (/comments|issues|serviceRatings/i.test(h)) width = 360;
+    sheet.setColumnWidth(col, width);
+  });
 }
 
 function ensureHeaders_(sheet) {
@@ -143,25 +188,29 @@ function getDynamicSurveyKeys_() {
     'priorities.maraSatisfactionRating',
     'priorities.additionalComments',
     'priorities.contactableForFollowUp',
-    'metadata.pageUrl',
-    'metadata.origin',
-    'metadata.language',
-    'metadata.platform',
-    'metadata.submittedAtClient'
   ];
 }
 
 function flattenPayload_(payload) {
+  const STORAGE_SKIP_KEYS = {
+    'metadata.pageUrl': true,
+    'metadata.origin': true,
+    'metadata.language': true,
+    'metadata.platform': true,
+    'metadata.submittedAtClient': true,
+    'metadata.userAgent': true
+  };
   const out = {};
+  const shouldStore = (key) => !!key && !STORAGE_SKIP_KEYS[key];
 
   function visit(prefix, value) {
     if (value === null || value === undefined) {
-      out[prefix] = '';
+      if (shouldStore(prefix)) out[prefix] = '';
       return;
     }
 
     if (Array.isArray(value)) {
-      out[prefix] = value.map(sanitizeValue_).join(' | ');
+      if (shouldStore(prefix)) out[prefix] = value.map(sanitizeValue_).join(' | ');
       return;
     }
 
@@ -173,7 +222,9 @@ function flattenPayload_(payload) {
       return;
     }
 
-    out[prefix] = sanitizeValue_(value);
+    if (shouldStore(prefix)) {
+      out[prefix] = sanitizeValue_(value);
+    }
   }
 
   visit('', payload);
@@ -320,3 +371,4 @@ function jsonResponse_(success, message, statusCode, extra) {
     .createTextOutput(JSON.stringify(body))
     .setMimeType(ContentService.MimeType.JSON);
 }
+

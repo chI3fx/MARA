@@ -10,6 +10,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const mainForm = document.getElementById('mainForm');
   const successScreen = document.getElementById('successScreen');
+  let submissionComplete = false;
 
   if (!submitBtn || !mainForm) return;
 
@@ -189,16 +190,34 @@
   }
 
   function completeSubmission() {
+    submissionComplete = true;
     if (successScreen) {
       mainForm.style.display = 'none';
       successScreen.style.display = 'block';
       successScreen.scrollIntoView({ behavior: 'smooth' });
     }
 
+    setProgressComplete();
+  }
+
+  function setProgressComplete() {
     const progressFill = document.getElementById('progressFill');
     const progressPct = document.getElementById('progressPct');
     if (progressFill) progressFill.style.width = '100%';
     if (progressPct) progressPct.textContent = '100% complete';
+  }
+
+  // Existing inline script keeps recalculating progress on input/scroll.
+  // Once submit succeeds, force it to remain complete.
+  const baseUpdateProgress = window.updateProgress;
+  if (typeof baseUpdateProgress === 'function') {
+    window.updateProgress = function wrappedUpdateProgress() {
+      if (submissionComplete) {
+        setProgressComplete();
+        return;
+      }
+      return baseUpdateProgress();
+    };
   }
 
   function injectHoneypotField() {
