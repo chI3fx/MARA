@@ -21,6 +21,7 @@
   injectHoneypotField();
   improveAccessibility();
   bindSubmit();
+  takeoverProgressTracking();
 
   function bindSubmit() {
     submitBtn.removeAttribute('onclick');
@@ -240,16 +241,59 @@
 
   // Existing inline script keeps recalculating progress on input/scroll.
   // Once submit succeeds, force it to remain complete.
-  const baseUpdateProgress = window.updateProgress;
-  if (typeof baseUpdateProgress === 'function') {
-    originalUpdateProgress = baseUpdateProgress;
+  function takeoverProgressTracking() {
+    const baseUpdateProgress = window.updateProgress;
+    if (typeof baseUpdateProgress === 'function') {
+      originalUpdateProgress = baseUpdateProgress;
+      document.removeEventListener('input', baseUpdateProgress);
+      document.removeEventListener('change', baseUpdateProgress);
+      window.removeEventListener('scroll', baseUpdateProgress);
+    }
+
     window.updateProgress = function wrappedUpdateProgress() {
       if (submissionComplete) {
         setProgressComplete();
         return;
       }
-      return baseUpdateProgress();
+      updateProgressByField();
     };
+
+    document.addEventListener('input', window.updateProgress);
+    document.addEventListener('change', window.updateProgress);
+    window.addEventListener('scroll', window.updateProgress);
+    window.updateProgress();
+  }
+
+  function updateProgressByField() {
+    const fields = Array.from(document.querySelectorAll('.field'));
+    let answered = 0;
+
+    fields.forEach((field) => {
+      const radios = field.querySelectorAll('input[type="radio"]');
+      const checks = field.querySelectorAll('input[type="checkbox"]');
+      const textInputs = field.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"], textarea');
+      const selects = field.querySelectorAll('select');
+      const ranges = field.querySelectorAll('input[type="range"]');
+      const activeScaleButtons = field.querySelectorAll('.scale-btn.active');
+
+      const hasRadioAnswer = radios.length > 0 && Array.from(radios).some((r) => r.checked);
+      const hasCheckAnswer = checks.length > 0 && Array.from(checks).some((c) => c.checked);
+      const hasTextAnswer = textInputs.length > 0 && Array.from(textInputs).some((t) => (t.value || '').trim() !== '');
+      const hasSelectAnswer = selects.length > 0 && Array.from(selects).some((s) => (s.value || '').trim() !== '');
+      const hasRangeAnswer = ranges.length > 0 && Array.from(ranges).some((rg) => (rg.value || '').trim() !== '');
+      const hasScaleAnswer = activeScaleButtons.length > 0;
+
+      if (hasRadioAnswer || hasCheckAnswer || hasTextAnswer || hasSelectAnswer || hasRangeAnswer || hasScaleAnswer) {
+        answered += 1;
+      }
+    });
+
+    const total = Math.max(fields.length, 1);
+    const pct = Math.min(Math.round((answered / total) * 100), 99);
+    const progressFill = document.getElementById('progressFill');
+    const progressPct = document.getElementById('progressPct');
+    if (progressFill) progressFill.style.width = pct + '%';
+    if (progressPct) progressPct.textContent = pct + '% complete';
   }
 
   function detachOriginalProgressListeners() {
