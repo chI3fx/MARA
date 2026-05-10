@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxtvrmKLdNf7JR7pMLt4lDYquUzTJrlSk1c8kYHZc587j6EDogw1f5mHZd7iXN9nRfXAQ/execE';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxtvrmKLdNf7JR7pMLt4lDYquUzTJrlSk1c8kYHZc587j6EDogw1f5mHZd7iXN9nRfXAQ/exec';
   const ALLOWED_ORIGIN = window.location.origin;
   const SUBMIT_COOLDOWN_MS = 30000;
   const STORAGE_KEY = 'mara_survey_last_submit_at';
@@ -276,3 +276,5 @@
     });
   }
 })();
+
+
