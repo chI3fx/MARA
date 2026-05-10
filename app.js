@@ -57,9 +57,9 @@
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
+            'Content-Type': 'text/plain;charset=utf-8'
+  },
+      
         body: JSON.stringify(payload)
       });
 
