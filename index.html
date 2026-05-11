@@ -355,15 +355,6 @@
         </div>
         <div class="field-error">Please select your land tenure type.</div>
       </div>
-      <div class="field">
-        <label class="field-label">Respondent Category</label>
-        <div class="radio-group inline">
-          <label class="radio-opt"><input type="radio" name="respondentCat" value="Owner-occupier"> Owner-occupier</label>
-          <label class="radio-opt"><input type="radio" name="respondentCat" value="Landlord (not occupying)"> Landlord (not occupying)</label>
-          <label class="radio-opt"><input type="radio" name="respondentCat" value="Developer / Investor"> Developer / Investor</label>
-          <label class="radio-opt"><input type="radio" name="respondentCat" value="Other"> Other</label>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -396,15 +387,6 @@
         </div>
       </div>
       <div class="field">
-        <label class="field-label">Did you pay rates under the previous (now-repealed) valuation framework?</label>
-        <div class="radio-group inline">
-          <label class="radio-opt"><input type="radio" name="paidPrevious" value="Yes - up to date"> Yes - was up to date</label>
-          <label class="radio-opt"><input type="radio" name="paidPrevious" value="Yes - partially"> Yes - partially</label>
-          <label class="radio-opt"><input type="radio" name="paidPrevious" value="No"> No</label>
-          <label class="radio-opt"><input type="radio" name="paidPrevious" value="Not applicable"> Not applicable</label>
-        </div>
-      </div>
-      <div class="field">
         <label class="field-label">Approximate annual amount being demanded under the new valuation (KES)</label>
         <div class="field-hint">Leave blank if you have not yet received a specific demand amount.</div>
         <input type="number" id="amountDemanded" placeholder="e.g. 45,000" min="0">
@@ -432,16 +414,6 @@
           <input type="range" id="affordability" min="1" max="5" value="3" oninput="updateSlider()">
           <div class="slider-value" id="affordVal">3 - Neutral / Borderline</div>
           <div class="slider-labels"><span>1 - Completely Unaffordable</span><span>5 - Very Affordable</span></div>
-        </div>
-      </div>
-      <div class="field">
-        <label class="field-label">Which category best describes your household situation?</label>
-        <div class="radio-group">
-          <label class="radio-opt"><input type="radio" name="affordCat" value="Retiree / pensioner on fixed income"> Retiree / pensioner on fixed income</label>
-          <label class="radio-opt"><input type="radio" name="affordCat" value="Low-income household"> Low-income household</label>
-          <label class="radio-opt"><input type="radio" name="affordCat" value="Middle-income household"> Middle-income household</label>
-          <label class="radio-opt"><input type="radio" name="affordCat" value="High-income / business owner"> High-income / business owner</label>
-          <label class="radio-opt"><input type="radio" name="affordCat" value="Prefer not to say"> Prefer not to say</label>
         </div>
       </div>
       <div class="field">
@@ -493,23 +465,10 @@
       </div>
       <div class="field">
         <label class="field-label">Should the rating framework differentiate by property use?</label>
-        <div class="check-group">
-          <label class="check-opt"><input type="checkbox" name="diffUse" value="Residential vs commercial"> Yes - residential properties should pay differently from commercial ones</label>
-          <label class="check-opt"><input type="checkbox" name="diffUse" value="Vacant vs developed"> Yes - undeveloped/vacant land should be rated differently from developed property</label>
-          <label class="check-opt"><input type="checkbox" name="diffUse" value="Small vs large plots"> Yes - smaller plots should pay less than larger ones</label>
-          <label class="check-opt"><input type="checkbox" name="diffUse" value="No - same rate for all"> No - same rate for all property owners</label>
-          <label class="check-opt"><input type="checkbox" name="diffUse" value="Not sure"> Not sure</label>
-        </div>
-      </div>
-      <div class="field">
-        <label class="field-label">Should special exemptions or reductions be provided for any of the following?</label>
-        <div class="check-group">
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="Retirees and pensioners"> Retirees and pensioners</label>
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="Persons with disabilities"> Persons with disabilities</label>
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="Low-income households"> Low-income households</label>
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="Religious institutions"> Religious institutions / places of worship</label>
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="Schools and educational institutions"> Schools and educational institutions</label>
-          <label class="check-opt"><input type="checkbox" name="exemptions" value="No exemptions - uniform rate"> No exemptions - everyone should pay equally</label>
+        <div class="radio-group inline">
+          <label class="radio-opt"><input type="radio" name="diffUse" value="Yes"> Yes</label>
+          <label class="radio-opt"><input type="radio" name="diffUse" value="No"> No</label>
+          <label class="radio-opt"><input type="radio" name="diffUse" value="Not sure"> Not sure</label>
         </div>
       </div>
     </div>
@@ -586,15 +545,6 @@
           <label class="radio-opt"><input type="radio" name="supportLegal" value="Undecided"> Undecided</label>
         </div>
       </div>
-      <div class="field">
-        <label class="field-label">What strategy should MARA prioritise?</label>
-        <div class="radio-group">
-          <label class="radio-opt"><input type="radio" name="strategy" value="Negotiation first, litigation only if needed"> Negotiation first — maintain County engagement; only litigate if negotiations completely break down</label>
-          <label class="radio-opt"><input type="radio" name="strategy" value="Parallel track - negotiate and prepare legal action simultaneously"> Parallel track — negotiate while preparing for legal action simultaneously</label>
-          <label class="radio-opt"><input type="radio" name="strategy" value="Immediate legal action"> Immediate legal action — the process was flawed and should be challenged in court now</label>
-          <label class="radio-opt"><input type="radio" name="strategy" value="Compliance while advocating for reform"> Comply with current demands while advocating for future reform</label>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -611,7 +561,6 @@
           <label class="check-opt"><input type="checkbox" name="priorities" value="Phased payment or instalment options"> Phased payment or instalment plan options</label>
           <label class="check-opt"><input type="checkbox" name="priorities" value="Improved service delivery linked to rates"> Improved, measurable service delivery as a condition of rates payment</label>
           <label class="check-opt"><input type="checkbox" name="priorities" value="Full public participation process"> A proper, formal public participation process before any new roll is enforced</label>
-          <label class="check-opt"><input type="checkbox" name="priorities" value="Independent valuation review"> An independent review and challenge of the current valuation figures</label>
           <label class="check-opt"><input type="checkbox" name="priorities" value="County transparency on revenue use"> County transparency and accountability on how rates revenue is used</label>
         </div>
         <div id="priorityLimitMsg" style="font-size:12px;color:var(--error);margin-top:5px;display:none;">Please select no more than 3 priorities.</div>
@@ -793,7 +742,7 @@ function collectData() {
     respondent: { name: document.getElementById('name').value, phone: document.getElementById('phone').value, association: document.getElementById('assoc').value, associationOther: document.getElementById('assocOther').value, area: document.getElementById('area').value, plotNumber: document.getElementById('plotNo').value, tenure: rV('tenure'), category: rV('respondentCat') },
     currentSituation: { awareOfValuation: rV('awareValuation'), receivedCommunication: rV('receivedComm'), participatedInHearings: rV('publicParticip'), paidUnderPreviousFramework: rV('paidPrevious'), amountDemandedKES: document.getElementById('amountDemanded').value },
     affordability: { comparedToOld: rV('compareOld'), affordabilityScore: document.getElementById('affordability').value, householdCategory: rV('affordCat'), maxAffordableKES: document.getElementById('maxAffordable').value, defaultRisk: rV('defaultRisk') },
-    ratingFramework: { preferredSystem: rV('ratingSystem'), preferredFlatRange: rV('flatRange'), differentiationPreferences: cV('diffUse'), exemptionGroups: cV('exemptions') },
+    ratingFramework: { preferredSystem: rV('ratingSystem'), preferredFlatRange: rV('flatRange'), differentiationPreferences: rV('diffUse'), exemptionGroups: [] },
     serviceDelivery: { serviceRatings: svcRatings, ratesProportional: rV('proportional'), wouldPayIfTransparent: rV('transparent'), willingToPayIfFair: rV('willingPay') },
     legalConcerns: { hasConcerns: rV('legalConcern'), specificIssues: cV('legalIssues'), supportLegalAction: rV('supportLegal'), preferredStrategy: rV('strategy') },
     priorities: { topPriorities: cV('priorities'), maraSatisfactionRating: sV('maraRating'), additionalComments: document.getElementById('additionalComments').value, contactableForFollowUp: rV('contactable') }
@@ -805,7 +754,5 @@ function collectData() {
 
 </body>
 </html>
-
-
 
 
