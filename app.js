@@ -11,8 +11,11 @@
   const mainForm = document.getElementById('mainForm');
   const successScreen = document.getElementById('successScreen');
   const pageMain = document.querySelector('main');
+  const emailInput = document.getElementById('email');
   let submissionComplete = false;
   let isSubmitting = false;
+  let emailAlreadyExists = false;
+  let emailCheckTimer = null;
   let originalUpdateProgress = null;
 
   if (!submitBtn || !mainForm) return;
@@ -24,6 +27,7 @@
   bindSubmit();
   takeoverProgressTracking();
   clearRestoredFormStateOnLoad();
+  bindEmailLiveCheck();
 
   function bindSubmit() {
     submitBtn.removeAttribute('onclick');
@@ -176,6 +180,13 @@
       field?.classList.add('invalid');
       firstInvalid = firstInvalid || field;
       return { valid, firstInvalid, message: 'Please enter a valid email address.' };
+    }
+    if (emailAlreadyExists) {
+      valid = false;
+      const field = document.getElementById('f-email');
+      field?.classList.add('invalid');
+      firstInvalid = firstInvalid || field;
+      return { valid, firstInvalid, message: 'This email has already submitted a response.' };
     }
 
     const phone = (document.getElementById('phone')?.value || '').trim();
@@ -373,6 +384,65 @@
     if (!status) return;
     status.textContent = '';
     status.style.display = 'none';
+  }
+
+  function bindEmailLiveCheck() {
+    if (!emailInput) return;
+    emailInput.addEventListener('input', () => {
+      emailAlreadyExists = false;
+      renderEmailLiveStatus('', '');
+      if (emailCheckTimer) clearTimeout(emailCheckTimer);
+      emailCheckTimer = setTimeout(checkEmailExistsLive, 350);
+    });
+    emailInput.addEventListener('blur', checkEmailExistsLive);
+  }
+
+  async function checkEmailExistsLive() {
+    if (!emailInput) return;
+    const email = (emailInput.value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      emailAlreadyExists = false;
+      renderEmailLiveStatus('', '');
+      return;
+    }
+    if (!API_URL || API_URL.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) return;
+
+    try {
+      renderEmailLiveStatus('Checking email...', 'info');
+      const url = `${API_URL}?action=emailExists&email=${encodeURIComponent(email)}`;
+      const res = await fetch(url, { method: 'GET' });
+      const raw = await res.text();
+      const data = JSON.parse(raw);
+      emailAlreadyExists = !!data.exists;
+      if (emailAlreadyExists) {
+        renderEmailLiveStatus('This email has already been used.', 'error');
+      } else {
+        renderEmailLiveStatus('Email is available.', 'success');
+      }
+    } catch (_) {
+      // Silent fallback. Final duplicate check still happens on submit server-side.
+      emailAlreadyExists = false;
+      renderEmailLiveStatus('', '');
+    }
+  }
+
+  function renderEmailLiveStatus(text, type) {
+    const el = document.getElementById('emailLiveStatus');
+    if (!el) return;
+    if (!text) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = text;
+    if (type === 'error') {
+      el.style.color = 'var(--error)';
+    } else if (type === 'success') {
+      el.style.color = 'var(--navy)';
+    } else {
+      el.style.color = 'var(--muted)';
+    }
   }
 
   function clearFormState() {

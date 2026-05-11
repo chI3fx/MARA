@@ -63,6 +63,15 @@ function doPost(e) {
 }
 
 function doGet() {
+  const e = arguments[0] || {};
+  const action = e && e.parameter ? String(e.parameter.action || '').trim() : '';
+
+  if (action === 'emailExists') {
+    const email = e && e.parameter ? String(e.parameter.email || '') : '';
+    const exists = checkEmailExists_(email);
+    return jsonResponse_(true, 'Email check complete', 200, { exists: exists });
+  }
+
   return jsonResponse_(true, 'Survey API is running', 200, { method: 'POST' });
 }
 
@@ -418,6 +427,20 @@ function findExistingResponseByEmail_(sheet, headers, payload) {
   return { found: false };
 }
 
+function checkEmailExists_(emailRaw) {
+  const email = normalizeEmail_(emailRaw);
+  if (!email) return false;
+
+  const spreadsheetId = SCRIPT_PROPERTIES.getProperty('SPREADSHEET_ID');
+  if (!spreadsheetId) throw new Error('Missing SPREADSHEET_ID script property');
+  const ss = SpreadsheetApp.openById(spreadsheetId);
+  const sheet = getOrCreateSheet_(ss, SHEET_NAME);
+  const headers = ensureHeaders_(sheet);
+
+  const probePayload = { respondent: { email: email } };
+  return findExistingResponseByEmail_(sheet, headers, probePayload).found;
+}
+
 function jsonResponse_(success, message, statusCode, extra) {
   const body = {
     success: !!success,
@@ -445,4 +468,3 @@ function adminRefreshSheet_() {
   const headers = ensureHeaders_(sheet);
   setupSheetFormatting_(sheet, headers);
 }
-
