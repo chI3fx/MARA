@@ -12,6 +12,7 @@
   const successScreen = document.getElementById('successScreen');
   const pageMain = document.querySelector('main');
   let submissionComplete = false;
+  let isSubmitting = false;
   let originalUpdateProgress = null;
 
   if (!submitBtn || !mainForm) return;
@@ -22,6 +23,7 @@
   improveAccessibility();
   bindSubmit();
   takeoverProgressTracking();
+  clearRestoredFormStateOnLoad();
 
   function bindSubmit() {
     submitBtn.removeAttribute('onclick');
@@ -32,6 +34,7 @@
 
   async function onSubmit(event) {
     if (event) event.preventDefault();
+    if (submissionComplete || isSubmitting) return;
 
     clearMessage();
 
@@ -56,6 +59,7 @@
     }
 
     setSubmitting(true);
+    isSubmitting = true;
     showMessage('Submitting your response...', 'info');
 
     try {
@@ -90,6 +94,7 @@
         : error.message || 'Could not submit right now. Please try again.';
       showMessage(msg, 'error');
     } finally {
+      isSubmitting = false;
       setSubmitting(false);
     }
   }
@@ -204,6 +209,7 @@
 
     setProgressComplete();
     detachOriginalProgressListeners();
+    clearFormState();
   }
 
   function setProgressComplete() {
@@ -354,6 +360,43 @@
     if (!status) return;
     status.textContent = '';
     status.style.display = 'none';
+  }
+
+  function clearFormState() {
+    // Clear native form controls
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"], textarea').forEach((el) => {
+      el.value = '';
+    });
+    document.querySelectorAll('select').forEach((el) => {
+      el.selectedIndex = 0;
+    });
+    document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach((el) => {
+      el.checked = false;
+    });
+
+    // Clear custom visual states
+    document.querySelectorAll('.radio-opt.selected, .check-opt.selected').forEach((el) => el.classList.remove('selected'));
+    document.querySelectorAll('.scale-btn.active').forEach((el) => el.classList.remove('active'));
+
+    // Reset slider display if present
+    const affordability = document.getElementById('affordability');
+    if (affordability) {
+      affordability.value = affordability.min || '1';
+      if (typeof window.updateSlider === 'function') window.updateSlider();
+    }
+  }
+
+  function clearRestoredFormStateOnLoad() {
+    // Disable autocomplete restore behavior where possible.
+    document.querySelectorAll('input, textarea, select').forEach((el) => {
+      if (!el.hasAttribute('autocomplete')) el.setAttribute('autocomplete', 'off');
+    });
+
+    // BFCache/page restore can keep previous checked state; clear on fresh load/restore.
+    window.addEventListener('pageshow', function () {
+      if (!submissionComplete) clearFormState();
+      if (typeof window.updateProgress === 'function') window.updateProgress();
+    });
   }
 
   function improveAccessibility() {
