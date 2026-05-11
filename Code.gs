@@ -86,6 +86,7 @@ function writeResponse_(payload) {
   const rowObject = flattenPayload_(payload);
   rowObject.timestamp = new Date().toISOString();
   rowObject.responseId = createResponseId_();
+  rowObject.emailKey = normalizeEmail_(safeGet_(payload, ['respondent', 'email']));
   rowObject.userAgent = safeGet_(payload, ['metadata', 'userAgent']) || '';
 
   const row = headers.map((h) => rowObject[h] !== undefined ? rowObject[h] : '');
@@ -139,7 +140,7 @@ function setupSheetFormatting_(sheet, headers) {
 }
 
 function ensureHeaders_(sheet) {
-  const requiredBase = ['timestamp', 'responseId', 'userAgent'];
+  const requiredBase = ['timestamp', 'responseId', 'emailKey', 'userAgent'];
   const lastCol = Math.max(sheet.getLastColumn(), 1);
   const existing = sheet.getRange(1, 1, 1, lastCol).getValues()[0].filter(Boolean);
 
@@ -387,18 +388,22 @@ function normalizeHeaderKey_(value) {
 }
 
 function findExistingResponseByEmail_(sheet, headers, payload) {
-  const normalizedHeaders = headers.map(normalizeHeaderKey_);
-  const emailCandidates = ['respondent.email', 'respondent email', 'email', 'respondentemail'].map(normalizeHeaderKey_);
-  const emailIdx = normalizedHeaders.findIndex(function (h) { return emailCandidates.indexOf(h) >= 0; });
-  if (emailIdx === -1) return { found: false };
-
   const incomingEmail = normalizeEmail_(safeGet_(payload, ['respondent', 'email']));
   if (!incomingEmail) return { found: false };
+
+  const normalizedHeaders = headers.map(normalizeHeaderKey_);
+  const emailKeyIdx = normalizedHeaders.findIndex(function (h) { return h === normalizeHeaderKey_('emailKey'); });
+  const emailCandidates = ['respondent.email', 'respondent email', 'email', 'respondentemail'].map(normalizeHeaderKey_);
+  const emailIdx = normalizedHeaders.findIndex(function (h) { return emailCandidates.indexOf(h) >= 0; });
 
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return { found: false };
 
-  const emails = sheet.getRange(2, emailIdx + 1, lastRow - 1, 1).getValues();
+  const emails = emailKeyIdx >= 0
+    ? sheet.getRange(2, emailKeyIdx + 1, lastRow - 1, 1).getValues()
+    : (emailIdx >= 0 ? sheet.getRange(2, emailIdx + 1, lastRow - 1, 1).getValues() : []);
+  if (emails.length === 0) return { found: false };
+
   const responseIdIdx = normalizedHeaders.findIndex(function (h) { return h === normalizeHeaderKey_('responseId'); });
   const responseIds = responseIdIdx >= 0 ? sheet.getRange(2, responseIdIdx + 1, lastRow - 1, 1).getValues() : [];
 
