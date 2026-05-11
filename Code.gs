@@ -43,6 +43,11 @@ function doPost(e) {
       }
 
       const writeResult = writeResponse_(sanitized);
+      if (writeResult.duplicate) {
+        return jsonResponse_(false, 'This email has already submitted a response.', 409, {
+          responseId: writeResult.responseId || ''
+        });
+      }
       setSubmissionFingerprint_(sanitized);
 
       return jsonResponse_(true, 'Survey submitted successfully', 200, {
@@ -72,6 +77,12 @@ function writeResponse_(payload) {
 
   const headers = ensureHeaders_(sheet);
   setupSheetFormatting_(sheet, headers);
+
+  const existingByEmail = findExistingResponseByEmail_(sheet, headers, payload);
+  if (existingByEmail.found) {
+    return { duplicate: true, responseId: existingByEmail.responseId };
+  }
+
   const rowObject = flattenPayload_(payload);
   rowObject.timestamp = new Date().toISOString();
   rowObject.responseId = createResponseId_();
@@ -80,7 +91,7 @@ function writeResponse_(payload) {
   const row = headers.map((h) => rowObject[h] !== undefined ? rowObject[h] : '');
   sheet.appendRow(row);
 
-  return { responseId: rowObject.responseId };
+  return { responseId: rowObject.responseId, duplicate: false };
 }
 
 function setupSheetFormatting_(sheet, headers) {
@@ -166,6 +177,7 @@ function ensureHeaders_(sheet) {
 function getDynamicSurveyKeys_() {
   return [
     'respondent.name',
+    'respondent.email',
     'respondent.phone',
     'respondent.association',
     'respondent.associationOther',
@@ -245,13 +257,13 @@ function flattenPayload_(payload) {
 
 function validatePayload_(payload) {
   const name = safeGet_(payload, ['respondent', 'name']);
-  const phone = safeGet_(payload, ['respondent', 'phone']);
+  const email = safeGet_(payload, ['respondent', 'email']);
   const assoc = safeGet_(payload, ['respondent', 'association']);
   const tenure = safeGet_(payload, ['respondent', 'tenure']);
   const ratingSystem = safeGet_(payload, ['ratingFramework', 'preferredSystem']);
 
   if (!name || String(name).trim().length < 2) return { ok: false, message: 'Missing respondent name' };
-  if (!phone || String(phone).trim().length < 7) return { ok: false, message: 'Missing respondent phone' };
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) return { ok: false, message: 'Missing or invalid respondent email' };
   if (!assoc) return { ok: false, message: 'Missing association' };
   if (!tenure) return { ok: false, message: 'Missing tenure' };
   if (!ratingSystem) return { ok: false, message: 'Missing preferred rating system' };
@@ -325,9 +337,10 @@ function setSubmissionFingerprint_(payload) {
 
 function getSubmissionFingerprint_(payload) {
   const name = (safeGet_(payload, ['respondent', 'name']) || '').toLowerCase();
+  const email = (safeGet_(payload, ['respondent', 'email']) || '').toLowerCase();
   const phone = (safeGet_(payload, ['respondent', 'phone']) || '').toLowerCase();
   const ua = (safeGet_(payload, ['metadata', 'userAgent']) || '').toLowerCase();
-  const raw = [name, phone, ua].join('|');
+  const raw = [name, email, phone, ua].join('|');
   const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
   return digest.map(function (b) {
     const v = (b < 0 ? b + 256 : b).toString(16);
@@ -363,6 +376,36 @@ function getOrCreateSheet_(ss, sheetName) {
     sheet = ss.insertSheet(sheetName);
   }
   return sheet;
+}
+
+function normalizeEmail_(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function findExistingResponseByEmail_(sheet, headers, payload) {
+  const emailKey = 'respondent.email';
+  const emailIdx = headers.indexOf(emailKey);
+  if (emailIdx === -1) return { found: false };
+
+  const incomingEmail = normalizeEmail_(safeGet_(payload, ['respondent', 'email']));
+  if (!incomingEmail) return { found: false };
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { found: false };
+
+  const emails = sheet.getRange(2, emailIdx + 1, lastRow - 1, 1).getValues();
+  const responseIdIdx = headers.indexOf('responseId');
+  const responseIds = responseIdIdx >= 0 ? sheet.getRange(2, responseIdIdx + 1, lastRow - 1, 1).getValues() : [];
+
+  for (let i = 0; i < emails.length; i++) {
+    if (normalizeEmail_(emails[i][0]) === incomingEmail) {
+      return {
+        found: true,
+        responseId: responseIdIdx >= 0 ? String(responseIds[i][0] || '') : ''
+      };
+    }
+  }
+  return { found: false };
 }
 
 function jsonResponse_(success, message, statusCode, extra) {

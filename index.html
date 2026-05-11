@@ -147,7 +147,7 @@
   label.field-label .req { color: var(--error); margin-left: 3px; }
   .field-hint { font-size: 12px; color: var(--muted); margin-bottom: 7px; font-style: italic; }
 
-  input[type="text"], input[type="number"], input[type="tel"],
+  input[type="text"], input[type="number"], input[type="tel"], input[type="email"],
   select, textarea {
     width: 100%; padding: 10px 13px;
     border: 1.5px solid var(--border); border-radius: var(--radius);
@@ -299,11 +299,19 @@
           <input type="text" id="name" placeholder="As on title deed or lease">
           <div class="field-error">Please enter your full name.</div>
         </div>
+        <div class="field" id="f-email">
+          <label class="field-label">Email Address <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="e.g. name@example.com">
+          <div class="field-error">Please enter a valid email address.</div>
+        </div>
+      </div>
+      <div class="grid-2">
         <div class="field" id="f-phone">
-          <label class="field-label">Phone Number <span class="req">*</span></label>
+          <label class="field-label">Phone Number (optional)</label>
           <input type="tel" id="phone" placeholder="e.g. 07xx xxx xxx">
           <div class="field-error">Please enter a valid phone number.</div>
         </div>
+        <div class="field"></div>
       </div>
       <div class="field" id="f-assoc">
         <label class="field-label">Resident Association <span class="req">*</span></label>
@@ -739,9 +747,9 @@ function collectData() {
   services.forEach((s, i) => { svcRatings[s] = sV(`svc${i}`); });
   return {
     submitted: new Date().toISOString(),
-    respondent: { name: document.getElementById('name').value, phone: document.getElementById('phone').value, association: document.getElementById('assoc').value, associationOther: document.getElementById('assocOther').value, area: document.getElementById('area').value, plotNumber: document.getElementById('plotNo').value, tenure: rV('tenure'), category: rV('respondentCat') },
-    currentSituation: { awareOfValuation: rV('awareValuation'), receivedCommunication: rV('receivedComm'), participatedInHearings: rV('publicParticip'), paidUnderPreviousFramework: rV('paidPrevious'), amountDemandedKES: document.getElementById('amountDemanded').value },
-    affordability: { comparedToOld: rV('compareOld'), affordabilityScore: document.getElementById('affordability').value, householdCategory: rV('affordCat'), maxAffordableKES: document.getElementById('maxAffordable').value, defaultRisk: rV('defaultRisk') },
+    respondent: { name: document.getElementById('name').value, email: document.getElementById('email').value, phone: document.getElementById('phone').value, association: document.getElementById('assoc').value, associationOther: document.getElementById('assocOther').value, area: document.getElementById('area').value, plotNumber: document.getElementById('plotNo').value, tenure: rV('tenure') },
+    currentSituation: { awareOfValuation: rV('awareValuation'), receivedCommunication: rV('receivedComm'), participatedInHearings: rV('publicParticip'), amountDemandedKES: document.getElementById('amountDemanded').value },
+    affordability: { comparedToOld: rV('compareOld'), affordabilityScore: document.getElementById('affordability').value, maxAffordableKES: document.getElementById('maxAffordable').value, defaultRisk: rV('defaultRisk') },
     ratingFramework: { preferredSystem: rV('ratingSystem'), preferredFlatRange: rV('flatRange'), differentiationPreferences: rV('diffUse'), exemptionGroups: [] },
     serviceDelivery: { serviceRatings: svcRatings, ratesProportional: rV('proportional'), wouldPayIfTransparent: rV('transparent'), willingToPayIfFair: rV('willingPay') },
     legalConcerns: { hasConcerns: rV('legalConcern'), specificIssues: cV('legalIssues'), supportLegalAction: rV('supportLegal'), preferredStrategy: rV('strategy') },
@@ -754,5 +762,3 @@ function collectData() {
 
 </body>
 </html>
-
-

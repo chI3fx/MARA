@@ -145,7 +145,7 @@
 
     const checks = [
       ['f-name', (document.getElementById('name')?.value || '').trim().length > 1],
-      ['f-phone', (document.getElementById('phone')?.value || '').trim().length > 6],
+      ['f-email', (document.getElementById('email')?.value || '').trim().length > 3],
       ['f-assoc', (document.getElementById('assoc')?.value || '').trim() !== ''],
       ['f-tenure', !!document.querySelector('input[name="tenure"]:checked')],
       ['f-rating', !!document.querySelector('input[name="ratingSystem"]:checked')]
@@ -167,6 +167,15 @@
     if (!consentOk) {
       valid = false;
       firstInvalid = firstInvalid || consentBox;
+    }
+
+    const email = (document.getElementById('email')?.value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      valid = false;
+      const field = document.getElementById('f-email');
+      field?.classList.add('invalid');
+      firstInvalid = firstInvalid || field;
+      return { valid, firstInvalid, message: 'Please enter a valid email address.' };
     }
 
     const phone = (document.getElementById('phone')?.value || '').trim();
@@ -404,7 +413,7 @@
 
     const requiredLabels = [
       document.querySelector('label[for="name"]') || document.querySelector('#f-name .field-label'),
-      document.querySelector('label[for="phone"]') || document.querySelector('#f-phone .field-label')
+      document.querySelector('label[for="email"]') || document.querySelector('#f-email .field-label')
     ];
 
     requiredLabels.forEach((label) => {
