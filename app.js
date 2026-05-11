@@ -210,8 +210,12 @@
 
   function completeSubmission() {
     submissionComplete = true;
+    if (mainForm) {
+      mainForm.querySelectorAll('.section-card, .notice, .submit-area').forEach((el) => {
+        if (el && el.id !== 'successScreen') el.style.display = 'none';
+      });
+    }
     if (successScreen) {
-      mainForm.style.display = 'none';
       successScreen.style.display = 'block';
       successScreen.scrollIntoView({ behavior: 'smooth' });
     }
