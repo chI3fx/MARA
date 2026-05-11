@@ -382,9 +382,14 @@ function normalizeEmail_(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeHeaderKey_(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function findExistingResponseByEmail_(sheet, headers, payload) {
-  const emailKey = 'respondent.email';
-  const emailIdx = headers.indexOf(emailKey);
+  const normalizedHeaders = headers.map(normalizeHeaderKey_);
+  const emailCandidates = ['respondent.email', 'respondent email', 'email', 'respondentemail'].map(normalizeHeaderKey_);
+  const emailIdx = normalizedHeaders.findIndex(function (h) { return emailCandidates.indexOf(h) >= 0; });
   if (emailIdx === -1) return { found: false };
 
   const incomingEmail = normalizeEmail_(safeGet_(payload, ['respondent', 'email']));
@@ -394,7 +399,7 @@ function findExistingResponseByEmail_(sheet, headers, payload) {
   if (lastRow < 2) return { found: false };
 
   const emails = sheet.getRange(2, emailIdx + 1, lastRow - 1, 1).getValues();
-  const responseIdIdx = headers.indexOf('responseId');
+  const responseIdIdx = normalizedHeaders.findIndex(function (h) { return h === normalizeHeaderKey_('responseId'); });
   const responseIds = responseIdIdx >= 0 ? sheet.getRange(2, responseIdIdx + 1, lastRow - 1, 1).getValues() : [];
 
   for (let i = 0; i < emails.length; i++) {
